@@ -90,6 +90,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
         author: {
             '@type': 'Person',
             name: post.author,
+            url: 'https://github.com/Rvely3',
         },
         url: `${siteUrl}/blog/${slug}`,
         ...(post.coverImage && {
