@@ -1,6 +1,14 @@
 import { client } from '@/sanity/lib/client'
 import { PortableText } from '@portabletext/react'
 import { notFound } from 'next/navigation'
+import { Metadata } from 'next'
+import imageUrlBuilder from '@sanity/image-url'
+
+const builder = imageUrlBuilder(client)
+
+function urlFor(source: any) {
+  return builder.image(source)
+}
 
 interface Post {
   _id: string
@@ -9,7 +17,11 @@ interface Post {
   content: any[]
   publishedAt: string
   author: string
+  coverImage?: any
+  slug: { current: string }
 }
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mi-blog-three-lilac.vercel.app'
 
 async function getPost(slug: string): Promise<Post | null> {
   return client.fetch(
@@ -19,10 +31,47 @@ async function getPost(slug: string): Promise<Post | null> {
       excerpt,
       content,
       publishedAt,
-      author
+      author,
+      coverImage,
+      slug
     }`,
     { slug }
   )
+}
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ slug: string }> }
+): Promise<Metadata> {
+  const { slug } = await params
+  const post = await getPost(slug)
+
+  if (!post) return {}
+
+  const ogImage = post.coverImage
+    ? urlFor(post.coverImage).width(1200).height(630).url()
+    : undefined
+
+  return {
+    title: post.title,
+    description: post.excerpt,
+    alternates: {
+      canonical: `${siteUrl}/blog/${slug}`,
+    },
+    openGraph: {
+      type: 'article',
+      title: post.title,
+      description: post.excerpt,
+      url: `${siteUrl}/blog/${slug}`,
+      publishedTime: post.publishedAt,
+      images: ogImage ? [{ url: ogImage, width: 1200, height: 630 }] : [],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.excerpt,
+      images: ogImage ? [ogImage] : [],
+    },
+  }
 }
 
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -31,8 +80,28 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   if (!post) notFound()
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.excerpt,
+    datePublished: post.publishedAt,
+    author: {
+      '@type': 'Person',
+      name: post.author,
+    },
+    url: `${siteUrl}/blog/${slug}`,
+    ...(post.coverImage && {
+      image: urlFor(post.coverImage).width(1200).height(630).url(),
+    }),
+  }
+
   return (
     <main className="min-h-screen bg-black">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <article className="max-w-2xl mx-auto px-8 py-24">
         <h1 className="text-white text-4xl font-bold mb-4">{post.title}</h1>
         <div className="text-white/30 text-sm mb-12">
