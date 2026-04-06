@@ -28,10 +28,22 @@ export default async function Home() {
 
   return (
     <div style={{ background: '#fff', minHeight: '100vh' }}>
-
+      <style>{`
+  @media (max-width: 768px) {
+    .hero-grid { grid-template-columns: 1fr !important; }
+    .hero-color-block { display: none !important; }
+    .posts-grid { grid-template-columns: 1fr !important; }
+    .hero-section { padding: 3rem 1.25rem 2rem !important; }
+    .posts-section { padding: 0 1.25rem 4rem !important; }
+    .footer-top { grid-template-columns: 1fr !important; }
+  }
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .posts-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  }
+`}</style>
       {/* Hero */}
-      <section style={{ maxWidth: '960px', margin: '0 auto', padding: '5rem 1.5rem 4rem' }}>
-        <div style={{
+      <section className="hero-section" style={{ maxWidth: '960px', margin: '0 auto', padding: '5rem 1.5rem 4rem' }}>
+        <div className="hero-grid" style={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: '3rem',
@@ -79,7 +91,7 @@ export default async function Home() {
           </div>
 
           {/* Bloque de color */}
-          <div style={{
+          <div className="hero-color-block" style={{
             borderRadius: '14px', height: '260px',
             background: 'var(--terra-mid)',
             display: 'flex', alignItems: 'flex-end', padding: '18px',
@@ -116,6 +128,7 @@ export default async function Home() {
       {/* Artículos */}
       <section
         id="articulos"
+        className="posts-section"
         style={{ maxWidth: '960px', margin: '0 auto', padding: '0 1.5rem 6rem' }}
       >
         <div style={{
@@ -136,7 +149,7 @@ export default async function Home() {
             No hay artículos todavía.
           </p>
         ) : (
-          <div style={{
+          <div className="posts-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
             gap: '16px'
@@ -147,12 +160,14 @@ export default async function Home() {
                 href={`/blog/${post.slug.current}`}
                 style={{ textDecoration: 'none' }}
               >
-                <article style={{
-                  border: '0.5px solid var(--borde)',
-                  borderRadius: '16px', overflow: 'hidden',
-                  background: '#fff',
-                  transition: 'box-shadow 0.2s',
-                }}>
+                <article
+                  className="post-card"
+                  style={{
+                    border: '0.5px solid var(--borde)',
+                    borderRadius: '16px', overflow: 'hidden',
+                    background: '#fff',
+                    transition: 'box-shadow 0.2s, border-color 0.2s',
+                  }}>
                   {/* Bloque de color */}
                   <div style={{
                     height: '140px',

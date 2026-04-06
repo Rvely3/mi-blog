@@ -8,7 +8,14 @@ export default function Header() {
       borderTop: '3px solid var(--terra)',
       borderBottom: '0.5px solid var(--borde)',
     }}>
-      <div style={{
+      <style>{`
+        @media (max-width: 768px) {
+          .header-nav-links { display: none !important; }
+          .header-inner { padding: 0 1.25rem !important; }
+        }
+      `}</style>
+
+      <div className="header-inner" style={{
         maxWidth: '960px',
         margin: '0 auto',
         padding: '0 1.5rem',
@@ -30,15 +37,17 @@ export default function Header() {
 
         {/* Navegación */}
         <nav style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
-          <Link href="/" style={{ fontSize: '13px', color: 'var(--texto-mid)', textDecoration: 'none' }}>
-            Inicio
-          </Link>
-          <Link href="/terrenos" style={{ fontSize: '13px', color: 'var(--texto-mid)', textDecoration: 'none' }}>
-            Terrenos
-          </Link>
-          <Link href="/como-funciona" style={{ fontSize: '13px', color: 'var(--texto-mid)', textDecoration: 'none' }}>
-            Cómo funciona
-          </Link>
+          <div className="header-nav-links" style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
+            <Link href="/" style={{ fontSize: '13px', color: 'var(--texto-mid)', textDecoration: 'none' }}>
+              Inicio
+            </Link>
+            <Link href="/terrenos" style={{ fontSize: '13px', color: 'var(--texto-mid)', textDecoration: 'none' }}>
+              Terrenos
+            </Link>
+            <Link href="/como-funciona" style={{ fontSize: '13px', color: 'var(--texto-mid)', textDecoration: 'none' }}>
+              Cómo funciona
+            </Link>
+          </div>
           <Link
             href="/contacto"
             style={{

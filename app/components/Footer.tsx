@@ -6,9 +6,21 @@ export default function Footer() {
         padding: '3rem 2.5rem 1.5rem',
         fontFamily: 'var(--font-geist-sans)',
       }}>
+        <style>{`
+          @media (max-width: 768px) {
+            .footer-top {
+              grid-template-columns: 1fr !important;
+            }
+            .footer-bottom {
+              flex-direction: column !important;
+              align-items: flex-start !important;
+              gap: 12px !important;
+            }
+          }
+        `}</style>
   
         {/* Fila superior: 3 columnas */}
-        <div style={{
+        <div className="footer-top" style={{
           display: 'grid',
           gridTemplateColumns: '1.5fr 1fr 1fr',
           gap: '2rem',
@@ -112,7 +124,7 @@ export default function Footer() {
         </div>
   
         {/* Fila inferior: copyright + legal */}
-        <div style={{
+        <div className="footer-bottom" style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
