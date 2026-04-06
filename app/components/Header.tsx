@@ -2,34 +2,51 @@ import Link from 'next/link'
 
 export default function Header() {
   return (
-    <header className="w-full bg-white border-b" style={{ borderTopWidth: '3px', borderTopColor: 'var(--terra)', borderBottomColor: 'var(--borde)' }}>
-      <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+    <header style={{
+      width: '100%',
+      background: '#fff',
+      borderTop: '3px solid var(--terra)',
+      borderBottom: '0.5px solid var(--borde)',
+    }}>
+      <div style={{
+        maxWidth: '960px',
+        margin: '0 auto',
+        padding: '0 1.5rem',
+        height: '64px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
 
         {/* Logo */}
-        <Link href="/" className="flex flex-col" style={{ textDecoration: 'none' }}>
-          <span className="text-base font-medium" style={{ color: 'var(--texto)', letterSpacing: '0.01em' }}>
+        <Link href="/" style={{ textDecoration: 'none' }}>
+          <div style={{ fontSize: '17px', fontWeight: 500, color: 'var(--texto)', letterSpacing: '0.01em' }}>
             Tierra Viva
-          </span>
-          <span className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--terra)' }}>
+          </div>
+          <div style={{ fontSize: '10px', color: 'var(--terra)', letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: '2px' }}>
             Trujillo · La Libertad
-          </span>
+          </div>
         </Link>
 
         {/* Navegación */}
-        <nav className="flex items-center gap-6">
-          <Link href="/" className="text-sm" style={{ color: 'var(--texto-mid)' }}>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
+          <Link href="/" style={{ fontSize: '13px', color: 'var(--texto-mid)', textDecoration: 'none' }}>
             Inicio
           </Link>
-          <Link href="/terrenos" className="text-sm" style={{ color: 'var(--texto-mid)' }}>
+          <Link href="/terrenos" style={{ fontSize: '13px', color: 'var(--texto-mid)', textDecoration: 'none' }}>
             Terrenos
           </Link>
-          <Link href="/como-funciona" className="text-sm" style={{ color: 'var(--texto-mid)' }}>
+          <Link href="/como-funciona" style={{ fontSize: '13px', color: 'var(--texto-mid)', textDecoration: 'none' }}>
             Cómo funciona
           </Link>
           <Link
             href="/contacto"
-            className="text-xs font-medium text-white px-4 py-2 rounded-lg"
-            style={{ background: 'var(--terra)' }}
+            style={{
+              fontSize: '12px', fontWeight: 500,
+              color: '#fff', background: 'var(--terra)',
+              padding: '8px 18px', borderRadius: '8px',
+              textDecoration: 'none',
+            }}
           >
             Escríbenos
           </Link>
