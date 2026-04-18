@@ -1,14 +1,27 @@
 import Link from 'next/link'
+import type { SiteSettings } from '@/sanity/types'
+import { whatsappUrl } from '@/lib/whatsapp'
+
+interface Props {
+  settings?: SiteSettings | null
+}
 
 /**
  * Header global del sitio.
  * - Marca: Terrenosentrujillo.pe
- * - Enlaces: Inicio, Terrenos, Cómo funciona, Blog, Contacto (CTA)
+ * - Enlaces: Terrenos, Cómo funciona, Blog + CTA
  *
- * Nota: el menú móvil completo llegará en una fase posterior; por ahora
- * en <768px se ocultan los links y queda visible el CTA "Escríbenos".
+ * Si hay WhatsApp configurado en siteSettings, el CTA "Escríbenos" apunta
+ * directo a wa.me; si no, cae a `/contacto` (placeholder para fase 4).
  */
-export default function Header() {
+export default function Header({ settings }: Props) {
+  const brand = settings?.siteName || 'Terrenosentrujillo.pe'
+  const tagline = settings?.tagline || 'Trujillo · La Libertad'
+
+  const waHref = whatsappUrl(settings?.whatsapp, settings?.whatsappDefaultMessage)
+  const ctaHref = waHref || '/contacto'
+  const ctaExternal = Boolean(waHref)
+
   return (
     <header
       style={{
@@ -47,7 +60,7 @@ export default function Header() {
               letterSpacing: '0.01em',
             }}
           >
-            Terrenosentrujillo.pe
+            {brand}
           </div>
           <div
             style={{
@@ -58,7 +71,7 @@ export default function Header() {
               marginTop: '2px',
             }}
           >
-            Trujillo · La Libertad
+            {tagline}
           </div>
         </Link>
 
@@ -87,20 +100,39 @@ export default function Header() {
               Blog
             </Link>
           </div>
-          <Link
-            href="/contacto"
-            style={{
-              fontSize: '12px',
-              fontWeight: 500,
-              color: '#fff',
-              background: 'var(--terra)',
-              padding: '8px 18px',
-              borderRadius: '8px',
-              textDecoration: 'none',
-            }}
-          >
-            Escríbenos
-          </Link>
+          {ctaExternal ? (
+            <a
+              href={ctaHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                fontSize: '12px',
+                fontWeight: 500,
+                color: '#fff',
+                background: 'var(--terra)',
+                padding: '8px 18px',
+                borderRadius: '8px',
+                textDecoration: 'none',
+              }}
+            >
+              Escríbenos
+            </a>
+          ) : (
+            <Link
+              href={ctaHref}
+              style={{
+                fontSize: '12px',
+                fontWeight: 500,
+                color: '#fff',
+                background: 'var(--terra)',
+                padding: '8px 18px',
+                borderRadius: '8px',
+                textDecoration: 'none',
+              }}
+            >
+              Escríbenos
+            </Link>
+          )}
         </nav>
       </div>
     </header>

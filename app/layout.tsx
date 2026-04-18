@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import Header from '@/app/components/Header'
 import Footer from '@/app/components/Footer'
+import WhatsAppFloat from '@/app/components/WhatsAppFloat'
+import { getSiteSettings, getSiteUrl } from '@/lib/siteSettings'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -16,9 +18,7 @@ const geistMono = Geist_Mono({
   display: 'swap',
 })
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL || 'https://terrenosentrujillo.pe'
-
+const siteUrl = getSiteUrl()
 const siteName = 'Terrenosentrujillo.pe'
 const defaultDescription =
   'Terrenos en venta en Trujillo y La Libertad. Fichas con precio, área y ubicación, contacto directo por WhatsApp con el corredor.'
@@ -53,20 +53,26 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const settings = await getSiteSettings()
+
   return (
     <html
       lang="es-PE"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Header />
+        <Header settings={settings} />
         <main className="flex-1">{children}</main>
-        <Footer />
+        <Footer settings={settings} />
+        <WhatsAppFloat
+          phone={settings?.whatsapp}
+          message={settings?.whatsappDefaultMessage}
+        />
       </body>
     </html>
   )

@@ -1,16 +1,31 @@
 import Link from 'next/link'
+import type { SiteSettings } from '@/sanity/types'
+
+interface Props {
+  settings?: SiteSettings | null
+}
 
 /**
  * Footer global.
- * - Marca: Terrenosentrujillo.pe
- * - Columnas: descripción + navegar + info legal
- *
- * Los valores de contacto (WhatsApp, email) se consumirán desde
- * `siteSettings` en Sanity cuando ese componente se conecte. Por ahora
- * se enlazan solo como rutas internas (/contacto).
+ * - Marca: Terrenosentrujillo.pe (o el que venga en siteSettings)
+ * - Columnas: descripción + navegar + info
+ * - Redes sociales dinámicas desde siteSettings (si existen)
  */
-export default function Footer() {
+export default function Footer({ settings }: Props) {
   const year = new Date().getFullYear()
+  const brand = settings?.siteName || 'Terrenosentrujillo.pe'
+  const tagline = settings?.tagline || 'Trujillo · La Libertad'
+  const companyName = settings?.legal?.companyName
+  const ruc = settings?.legal?.ruc
+
+  const socials = settings?.socials
+  const socialLinks = [
+    { label: 'Facebook', href: socials?.facebook },
+    { label: 'Instagram', href: socials?.instagram },
+    { label: 'TikTok', href: socials?.tiktok },
+    { label: 'YouTube', href: socials?.youtube },
+    { label: 'LinkedIn', href: socials?.linkedin },
+  ].filter((s): s is { label: string; href: string } => Boolean(s.href))
 
   return (
     <footer
@@ -34,9 +49,7 @@ export default function Footer() {
         }
       `}</style>
 
-      <div
-        style={{ maxWidth: '1120px', margin: '0 auto' }}
-      >
+      <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
         {/* Fila superior: 3 columnas */}
         <div
           className="footer-top"
@@ -60,7 +73,7 @@ export default function Footer() {
                 letterSpacing: '-0.02em',
               }}
             >
-              Terrenosentrujillo.pe
+              {brand}
             </p>
             <p
               style={{
@@ -71,7 +84,7 @@ export default function Footer() {
                 textTransform: 'uppercase',
               }}
             >
-              Trujillo · La Libertad
+              {tagline}
             </p>
             <p
               style={{
@@ -85,6 +98,34 @@ export default function Footer() {
               Terrenos en venta en Trujillo. Fichas con precio, área y ubicación;
               contacto directo por WhatsApp con el corredor.
             </p>
+
+            {socialLinks.length > 0 && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                  marginTop: '16px',
+                }}
+              >
+                {socialLinks.map((s) => (
+                  <a
+                    key={s.label}
+                    href={s.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      fontSize: '12px',
+                      color: 'rgba(245,237,228,0.7)',
+                      textDecoration: 'none',
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    {s.label}
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Columna 2: Navegar */}
@@ -191,10 +232,12 @@ export default function Footer() {
           }}
         >
           <p style={{ fontSize: '12px', color: 'rgba(245,237,228,0.4)', margin: 0 }}>
-            © {year} Terrenosentrujillo.pe · Hecho desde Trujillo.
+            © {year} {brand} · Hecho desde Trujillo.
           </p>
           <p style={{ fontSize: '12px', color: 'rgba(245,237,228,0.35)', margin: 0 }}>
-            Corretaje inmobiliario · La Libertad, Perú
+            {companyName
+              ? `${companyName}${ruc ? ` · RUC ${ruc}` : ''}`
+              : 'Corretaje inmobiliario · La Libertad, Perú'}
           </p>
         </div>
       </div>

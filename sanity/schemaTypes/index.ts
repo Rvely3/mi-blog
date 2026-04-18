@@ -1,7 +1,10 @@
 import { type SchemaTypeDefinition } from 'sanity'
-import post from './post'
+
 import siteSettings from './siteSettings'
+import distrito from './distrito'
+import terreno from './terreno'
+import post from './post'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
-  types: [siteSettings, post],
+  types: [siteSettings, distrito, terreno, post],
 }

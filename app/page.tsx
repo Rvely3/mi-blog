@@ -1,70 +1,92 @@
-import { client } from '@/sanity/lib/client'
 import Link from 'next/link'
+import Image from 'next/image'
+import { client } from '@/sanity/lib/client'
+import { urlFor } from '@/sanity/lib/image'
+import { homePageQuery } from '@/sanity/lib/queries'
+import type {
+  DistritoSummary,
+  PostSummary,
+  TerrenoSummary,
+} from '@/sanity/types'
+import { getSiteSettings, getSiteUrl } from '@/lib/siteSettings'
+import { whatsappUrl } from '@/lib/whatsapp'
+import TerrenoCard from '@/app/components/TerrenoCard'
 
-/**
- * Home temporal de Fase 1.
- * El layout y el grid de artículos se mantienen del proyecto original
- * para no bloquear el deploy; el copy y la marca ya apuntan a
- * Terrenosentrujillo.pe. La home transaccional completa (hero con
- * buscador, terrenos destacados, distritos, FAQ, CTAs) se construye
- * en la Fase 3 del plan.
- */
-
-interface Post {
-  _id: string
-  title: string
-  slug: { current: string }
-  excerpt?: string
-  publishedAt?: string
-  author?: string
+interface HomeData {
+  terrenosDestacados: TerrenoSummary[]
+  terrenosRecientes: TerrenoSummary[]
+  distritos: DistritoSummary[]
+  posts: PostSummary[]
 }
-
-async function getPosts(): Promise<Post[]> {
-  return client.fetch(`*[_type == "post" && defined(slug.current)] | order(publishedAt desc)[0...6] {
-    _id,
-    title,
-    slug,
-    excerpt,
-    publishedAt,
-    author
-  }`)
-}
-
-const CARD_COLORS = ['#C07848', '#4A7C59', '#C8861A']
 
 export default async function Home() {
-  const posts = await getPosts()
+  const [data, settings] = await Promise.all([
+    client.fetch<HomeData>(homePageQuery),
+    getSiteSettings(),
+  ])
+
+  const siteUrl = getSiteUrl()
+  const destacados =
+    data.terrenosDestacados?.length > 0
+      ? data.terrenosDestacados
+      : data.terrenosRecientes || []
+  const distritos = data.distritos || []
+  const posts = data.posts || []
+
+  const waHref = whatsappUrl(
+    settings?.whatsapp,
+    settings?.whatsappDefaultMessage ||
+      'Hola, vi su web Terrenosentrujillo.pe y quisiera más información.',
+  )
+
+  // JSON-LD: Organization / LocalBusiness para la home
+  const orgLd: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'RealEstateAgent',
+    name: settings?.siteName || 'Terrenosentrujillo.pe',
+    url: siteUrl,
+    areaServed: {
+      '@type': 'AdministrativeArea',
+      name: 'Trujillo, La Libertad, Perú',
+    },
+    ...(settings?.email ? { email: settings.email } : {}),
+    ...(settings?.phone ? { telephone: settings.phone } : {}),
+    ...(settings?.socials
+      ? {
+          sameAs: Object.values(settings.socials).filter(
+            (v): v is string => typeof v === 'string' && v.length > 0,
+          ),
+        }
+      : {}),
+  }
 
   return (
-    <div style={{ background: '#fff', minHeight: '100vh' }}>
+    <div style={{ background: '#fff' }}>
       <style>{`
-  @media (max-width: 768px) {
-    .hero-grid { grid-template-columns: 1fr !important; }
-    .hero-color-block { display: none !important; }
-    .posts-grid { grid-template-columns: 1fr !important; }
-    .hero-section { padding: 3rem 1.25rem 2rem !important; }
-    .posts-section { padding: 0 1.25rem 4rem !important; }
-  }
-  @media (min-width: 769px) and (max-width: 1024px) {
-    .posts-grid { grid-template-columns: repeat(2, 1fr) !important; }
-  }
-`}</style>
+        @media (max-width: 900px) {
+          .home-hero-grid { grid-template-columns: 1fr !important; }
+          .home-hero-block { display: none !important; }
+          .home-grid-3 { grid-template-columns: 1fr !important; }
+          .home-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (min-width: 901px) and (max-width: 1024px) {
+          .home-grid-3 { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+      `}</style>
 
-      {/* Hero temporal */}
+      {/* ── HERO ── */}
       <section
-        className="hero-section"
-        style={{ maxWidth: '1120px', margin: '0 auto', padding: '5rem 1.5rem 4rem' }}
+        style={{ maxWidth: '1120px', margin: '0 auto', padding: '4.5rem 1.5rem 3rem' }}
       >
         <div
-          className="hero-grid"
+          className="home-hero-grid"
           style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
+            gridTemplateColumns: '1.1fr 1fr',
             gap: '3rem',
             alignItems: 'center',
           }}
         >
-          {/* Texto */}
           <div>
             <div
               style={{
@@ -91,29 +113,30 @@ export default async function Home() {
             <h1
               style={{
                 fontFamily: 'Georgia, serif',
-                fontSize: '40px',
+                fontSize: '44px',
                 fontWeight: 400,
                 color: 'var(--texto)',
-                lineHeight: 1.15,
-                marginBottom: '16px',
-                letterSpacing: '-0.01em',
+                lineHeight: 1.1,
+                marginBottom: '18px',
+                letterSpacing: '-0.015em',
               }}
             >
-              Terrenos en <em style={{ color: 'var(--terra)', fontStyle: 'italic' }}>Trujillo</em>
-              ,<br />
+              Terrenos en{' '}
+              <em style={{ color: 'var(--terra)', fontStyle: 'italic' }}>Trujillo</em>,
+              <br />
               con información clara.
             </h1>
             <p
               style={{
-                fontSize: '14px',
+                fontSize: '15px',
                 color: 'var(--texto-mid)',
                 lineHeight: 1.75,
                 marginBottom: '2rem',
-                maxWidth: '360px',
+                maxWidth: '420px',
               }}
             >
-              Fichas con precio, área y ubicación. Contacto directo por WhatsApp con el
-              corredor. Sin rodeos y sin intermediarios extra.
+              Precio, área, ubicación y el contacto directo con el corredor por
+              WhatsApp. Sin rodeos, sin intermediarios extra.
             </p>
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               <Link
@@ -122,44 +145,65 @@ export default async function Home() {
                   display: 'inline-block',
                   background: 'var(--terra)',
                   color: '#fff',
-                  fontSize: '13px',
+                  fontSize: '14px',
                   fontWeight: 500,
-                  padding: '11px 22px',
+                  padding: '12px 24px',
                   borderRadius: '8px',
                   textDecoration: 'none',
                 }}
               >
                 Ver terrenos
               </Link>
-              <Link
-                href="/contacto"
-                style={{
-                  display: 'inline-block',
-                  background: '#fff',
-                  color: 'var(--texto)',
-                  border: '1px solid var(--borde)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  padding: '11px 22px',
-                  borderRadius: '8px',
-                  textDecoration: 'none',
-                }}
-              >
-                Contactar
-              </Link>
+              {waHref ? (
+                <a
+                  href={waHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-block',
+                    background: '#fff',
+                    color: 'var(--texto)',
+                    border: '1px solid var(--borde)',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    padding: '12px 24px',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                  }}
+                >
+                  Escribir por WhatsApp
+                </a>
+              ) : (
+                <Link
+                  href="/contacto"
+                  style={{
+                    display: 'inline-block',
+                    background: '#fff',
+                    color: 'var(--texto)',
+                    border: '1px solid var(--borde)',
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    padding: '12px 24px',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                  }}
+                >
+                  Contactar
+                </Link>
+              )}
             </div>
           </div>
 
-          {/* Bloque de color */}
+          {/* Bloque decorativo */}
           <div
-            className="hero-color-block"
+            className="home-hero-block"
             style={{
               borderRadius: '14px',
-              height: '260px',
+              height: '320px',
               background: 'var(--terra-mid)',
               display: 'flex',
               alignItems: 'flex-end',
-              padding: '18px',
+              padding: '20px',
               position: 'relative',
               overflow: 'hidden',
             }}
@@ -179,10 +223,10 @@ export default async function Home() {
               style={{
                 background: 'rgba(255,255,255,0.95)',
                 borderRadius: '10px',
-                padding: '10px 14px',
+                padding: '12px 16px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
+                gap: '12px',
               }}
             >
               <div
@@ -195,10 +239,10 @@ export default async function Home() {
                 }}
               />
               <div>
-                <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--texto)' }}>
+                <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--texto)' }}>
                   Huanchaco · Víctor Larco · Centro
                 </div>
-                <div style={{ fontSize: '10px', color: 'var(--texto-soft)', marginTop: '1px' }}>
+                <div style={{ fontSize: '11px', color: 'var(--texto-soft)', marginTop: '2px' }}>
                   Zonas con alta demanda
                 </div>
               </div>
@@ -207,146 +251,436 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Blog: últimas notas (ayuda SEO) */}
-      <section
-        id="articulos"
-        className="posts-section"
-        style={{ maxWidth: '1120px', margin: '0 auto', padding: '0 1.5rem 6rem' }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            marginBottom: '2rem',
-          }}
+      {/* ── TERRENOS DESTACADOS ── */}
+      {destacados.length > 0 && (
+        <section
+          style={{ maxWidth: '1120px', margin: '0 auto', padding: '3rem 1.5rem' }}
         >
-          <span
+          <SectionHeader
+            eyebrow="Catálogo"
+            title="Terrenos destacados"
+            action={{ label: 'Ver todos', href: '/terrenos' }}
+          />
+          <div
+            className="home-grid-3"
             style={{
-              fontSize: '11px',
-              color: 'var(--texto-soft)',
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '20px',
             }}
           >
-            Desde el blog
-          </span>
-          <div style={{ flex: 1, height: '0.5px', background: 'var(--borde)' }} />
-        </div>
+            {destacados.slice(0, 6).map((t, i) => (
+              <TerrenoCard key={t._id} terreno={t} priority={i < 3} />
+            ))}
+          </div>
+        </section>
+      )}
 
-        {posts.length === 0 ? (
-          <p style={{ color: 'var(--texto-soft)', fontSize: '14px' }}>
-            Pronto publicaremos artículos sobre comprar terreno en Trujillo, zonas, trámites y más.
-          </p>
-        ) : (
+      {/* ── DISTRITOS ── */}
+      {distritos.length > 0 && (
+        <section
+          style={{ maxWidth: '1120px', margin: '0 auto', padding: '3rem 1.5rem' }}
+        >
+          <SectionHeader eyebrow="Zonas" title="Distritos donde operamos" />
           <div
-            className="posts-grid"
+            className="home-grid-4"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '16px',
+            }}
+          >
+            {distritos.map((d) => (
+              <DistritoCard key={d._id} distrito={d} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── CÓMO FUNCIONA ── */}
+      <section
+        style={{ maxWidth: '1120px', margin: '0 auto', padding: '3rem 1.5rem' }}
+      >
+        <SectionHeader eyebrow="Proceso" title="Cómo funciona" />
+        <div
+          className="home-grid-3"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '16px',
+          }}
+        >
+          {[
+            {
+              n: '01',
+              title: 'Explora el catálogo',
+              body: 'Revisa fichas con precio, área, ubicación y fotos. Filtra por distrito.',
+            },
+            {
+              n: '02',
+              title: 'Escríbenos por WhatsApp',
+              body: 'Coordinamos una visita o te enviamos más información sin compromiso.',
+            },
+            {
+              n: '03',
+              title: 'Acompañamos el trámite',
+              body: 'Te guiamos en el cierre: minuta, pago, firma notarial y registral.',
+            },
+          ].map((step) => (
+            <div
+              key={step.n}
+              style={{
+                border: '1px solid var(--borde)',
+                borderRadius: '14px',
+                padding: '1.5rem',
+                background: '#fff',
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: 'Georgia, serif',
+                  fontSize: '28px',
+                  color: 'var(--terra)',
+                  margin: '0 0 8px 0',
+                  fontWeight: 400,
+                }}
+              >
+                {step.n}
+              </p>
+              <h3
+                style={{
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  color: 'var(--texto)',
+                  margin: '0 0 6px 0',
+                }}
+              >
+                {step.title}
+              </h3>
+              <p
+                style={{
+                  fontSize: '13px',
+                  color: 'var(--texto-mid)',
+                  lineHeight: 1.65,
+                  margin: 0,
+                }}
+              >
+                {step.body}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── BLOG ── */}
+      {posts.length > 0 && (
+        <section
+          style={{ maxWidth: '1120px', margin: '0 auto', padding: '3rem 1.5rem' }}
+        >
+          <SectionHeader
+            eyebrow="Blog"
+            title="Guías y zonas"
+            action={{ label: 'Ver blog', href: '/blog' }}
+          />
+          <div
+            className="home-grid-3"
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
               gap: '16px',
             }}
           >
-            {posts.map((post, i) => (
-              <Link
-                key={post._id}
-                href={`/blog/${post.slug.current}`}
-                style={{ textDecoration: 'none' }}
-              >
-                <article
-                  className="post-card"
-                  style={{
-                    border: '0.5px solid var(--borde)',
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    background: '#fff',
-                    transition: 'box-shadow 0.2s, border-color 0.2s',
-                  }}
-                >
-                  <div
-                    style={{
-                      height: '140px',
-                      background: CARD_COLORS[i % CARD_COLORS.length],
-                      display: 'flex',
-                      alignItems: 'flex-end',
-                      padding: '14px',
-                    }}
-                  >
-                    <span
-                      style={{
-                        background: 'rgba(255,255,255,0.92)',
-                        color: 'var(--texto)',
-                        fontSize: '10px',
-                        fontWeight: 500,
-                        padding: '4px 11px',
-                        borderRadius: '999px',
-                      }}
-                    >
-                      {post.publishedAt
-                        ? new Date(post.publishedAt).toLocaleDateString('es-PE', {
-                            day: 'numeric',
-                            month: 'long',
-                          })
-                        : 'Sin fecha'}
-                    </span>
-                  </div>
-
-                  <div style={{ padding: '16px' }}>
-                    {post.author && (
-                      <div
-                        style={{
-                          fontSize: '10px',
-                          color: 'var(--texto-soft)',
-                          letterSpacing: '0.1em',
-                          textTransform: 'uppercase',
-                          marginBottom: '5px',
-                        }}
-                      >
-                        {post.author}
-                      </div>
-                    )}
-                    <h2
-                      style={{
-                        fontSize: '15px',
-                        fontWeight: 500,
-                        color: 'var(--texto)',
-                        lineHeight: 1.3,
-                        marginBottom: 0,
-                      }}
-                    >
-                      {post.title}
-                    </h2>
-                    {post.excerpt && (
-                      <p
-                        style={{
-                          fontSize: '12px',
-                          color: 'var(--texto-mid)',
-                          lineHeight: 1.55,
-                          marginTop: '6px',
-                        }}
-                      >
-                        {post.excerpt}
-                      </p>
-                    )}
-                    <div
-                      style={{
-                        marginTop: '12px',
-                        paddingTop: '12px',
-                        borderTop: '0.5px solid var(--borde)',
-                        fontSize: '11px',
-                        color: 'var(--terra)',
-                        fontWeight: 500,
-                      }}
-                    >
-                      Leer artículo →
-                    </div>
-                  </div>
-                </article>
-              </Link>
+            {posts.map((p) => (
+              <PostCard key={p._id} post={p} />
             ))}
           </div>
-        )}
+        </section>
+      )}
+
+      {/* ── CTA FINAL ── */}
+      <section
+        style={{
+          background: 'var(--fondo)',
+          marginTop: '3rem',
+        }}
+      >
+        <div
+          style={{
+            maxWidth: '1120px',
+            margin: '0 auto',
+            padding: '4rem 1.5rem',
+            textAlign: 'center',
+          }}
+        >
+          <h2
+            style={{
+              fontFamily: 'Georgia, serif',
+              fontSize: '28px',
+              fontWeight: 400,
+              letterSpacing: '-0.01em',
+              color: 'var(--texto)',
+              margin: '0 0 12px 0',
+            }}
+          >
+            ¿Buscas un terreno específico?
+          </h2>
+          <p
+            style={{
+              fontSize: '14px',
+              color: 'var(--texto-mid)',
+              maxWidth: '520px',
+              margin: '0 auto 1.5rem',
+              lineHeight: 1.7,
+            }}
+          >
+            Cuéntanos zona, área y presupuesto. Te avisamos cuando aparezca algo
+            que calce con lo que buscas.
+          </p>
+          {waHref ? (
+            <a
+              href={waHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-block',
+                background: 'var(--terra)',
+                color: '#fff',
+                fontSize: '14px',
+                fontWeight: 500,
+                padding: '12px 24px',
+                borderRadius: '8px',
+                textDecoration: 'none',
+              }}
+            >
+              Escribir por WhatsApp
+            </a>
+          ) : (
+            <Link
+              href="/contacto"
+              style={{
+                display: 'inline-block',
+                background: 'var(--terra)',
+                color: '#fff',
+                fontSize: '14px',
+                fontWeight: 500,
+                padding: '12px 24px',
+                borderRadius: '8px',
+                textDecoration: 'none',
+              }}
+            >
+              Contactar
+            </Link>
+          )}
+        </div>
       </section>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgLd) }}
+      />
     </div>
+  )
+}
+
+// ── Sub-componentes ──
+
+function SectionHeader({
+  eyebrow,
+  title,
+  action,
+}: {
+  eyebrow: string
+  title: string
+  action?: { label: string; href: string }
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'baseline',
+        justifyContent: 'space-between',
+        gap: '12px',
+        flexWrap: 'wrap',
+        marginBottom: '1.5rem',
+      }}
+    >
+      <div>
+        <p
+          style={{
+            fontSize: '11px',
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+            color: 'var(--terra)',
+            margin: '0 0 4px 0',
+          }}
+        >
+          {eyebrow}
+        </p>
+        <h2
+          style={{
+            fontFamily: 'Georgia, serif',
+            fontSize: '26px',
+            fontWeight: 400,
+            letterSpacing: '-0.01em',
+            color: 'var(--texto)',
+            margin: 0,
+          }}
+        >
+          {title}
+        </h2>
+      </div>
+      {action && (
+        <Link
+          href={action.href}
+          style={{
+            fontSize: '13px',
+            color: 'var(--terra)',
+            textDecoration: 'none',
+            fontWeight: 500,
+          }}
+        >
+          {action.label} →
+        </Link>
+      )}
+    </div>
+  )
+}
+
+function DistritoCard({ distrito }: { distrito: DistritoSummary }) {
+  const img = distrito.image
+    ? urlFor(distrito.image).width(600).height(400).fit('crop').url()
+    : null
+
+  return (
+    <Link
+      href={`/terrenos/zona/${distrito.slug}`}
+      style={{ textDecoration: 'none' }}
+    >
+      <div
+        style={{
+          position: 'relative',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          aspectRatio: '3 / 4',
+          background: 'var(--terra-light)',
+        }}
+      >
+        {img ? (
+          <Image
+            src={img}
+            alt={distrito.image?.alt || distrito.name}
+            fill
+            sizes="(max-width: 900px) 50vw, 25vw"
+            style={{ objectFit: 'cover' }}
+          />
+        ) : null}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background:
+              'linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.55) 100%)',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            left: '14px',
+            bottom: '14px',
+            color: '#fff',
+          }}
+        >
+          <p
+            style={{
+              fontFamily: 'Georgia, serif',
+              fontSize: '18px',
+              fontWeight: 500,
+              margin: 0,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            {distrito.name}
+          </p>
+          <p
+            style={{
+              fontSize: '11px',
+              opacity: 0.85,
+              margin: '2px 0 0 0',
+              letterSpacing: '0.04em',
+            }}
+          >
+            Ver terrenos →
+          </p>
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+function PostCard({ post }: { post: PostSummary }) {
+  const img = post.coverImage
+    ? urlFor(post.coverImage).width(640).height(400).fit('crop').url()
+    : null
+
+  return (
+    <Link
+      href={`/blog/${post.slug}`}
+      style={{ textDecoration: 'none' }}
+    >
+      <article
+        style={{
+          border: '1px solid var(--borde)',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          background: '#fff',
+          height: '100%',
+        }}
+      >
+        <div
+          style={{
+            position: 'relative',
+            width: '100%',
+            aspectRatio: '16 / 10',
+            background: 'var(--terra-light)',
+          }}
+        >
+          {img ? (
+            <Image
+              src={img}
+              alt={post.coverImage?.alt || post.title}
+              fill
+              sizes="(max-width: 900px) 100vw, 33vw"
+              style={{ objectFit: 'cover' }}
+            />
+          ) : null}
+        </div>
+        <div style={{ padding: '14px 16px 16px' }}>
+          <h3
+            style={{
+              fontFamily: 'Georgia, serif',
+              fontSize: '16px',
+              fontWeight: 500,
+              color: 'var(--texto)',
+              margin: '0 0 6px 0',
+              lineHeight: 1.35,
+            }}
+          >
+            {post.title}
+          </h3>
+          {post.excerpt && (
+            <p
+              style={{
+                fontSize: '13px',
+                color: 'var(--texto-mid)',
+                lineHeight: 1.55,
+                margin: 0,
+              }}
+            >
+              {post.excerpt}
+            </p>
+          )}
+        </div>
+      </article>
+    </Link>
   )
 }

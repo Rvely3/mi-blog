@@ -1,11 +1,15 @@
 import { client } from '@/sanity/lib/client'
 import type { MetadataRoute } from 'next'
+import {
+  distritosSlugsQuery,
+  terrenosSlugsQuery,
+} from '@/sanity/lib/queries'
+import { getSiteUrl } from '@/lib/siteSettings'
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL || 'https://terrenosentrujillo.pe'
+const siteUrl = getSiteUrl()
 
 async function getPosts() {
-  return client.fetch(
+  return client.fetch<{ slug: string; publishedAt?: string; _updatedAt?: string }[]>(
     `*[_type == "post" && defined(slug.current)] {
       "slug": slug.current,
       publishedAt,
@@ -15,13 +19,17 @@ async function getPosts() {
 }
 
 /**
- * Sitemap mínimo de la Fase 1.
- * Cuando existan los schemas `terreno` y `distrito`, se agregan aquí sus rutas
- * (por ahora no existen en Sanity, así que no las incluimos para evitar
- * queries que devuelvan vacío innecesariamente).
+ * Sitemap completo.
+ * Incluye rutas estáticas + terrenos + hubs de distrito + posts.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const posts = await getPosts()
+  const [posts, terrenos, distritos] = await Promise.all([
+    getPosts(),
+    client.fetch<{ slug: string; _updatedAt?: string; publishedAt?: string }[]>(
+      terrenosSlugsQuery,
+    ),
+    client.fetch<{ slug: string; _updatedAt?: string }[]>(distritosSlugsQuery),
+  ])
 
   const now = new Date()
 
@@ -36,14 +44,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${siteUrl}/aviso-legal`, lastModified: now, changeFrequency: 'yearly', priority: 0.1 },
   ]
 
-  const postEntries: MetadataRoute.Sitemap = posts.map(
-    (post: { slug: string; publishedAt?: string; _updatedAt?: string }) => ({
-      url: `${siteUrl}/blog/${post.slug}`,
-      lastModified: new Date(post._updatedAt || post.publishedAt || now),
-      changeFrequency: 'weekly' as const,
-      priority: 0.8,
-    }),
-  )
+  const terrenoEntries: MetadataRoute.Sitemap = (terrenos || []).map((t) => ({
+    url: `${siteUrl}/terrenos/${t.slug}`,
+    lastModified: new Date(t._updatedAt || t.publishedAt || now),
+    changeFrequency: 'weekly' as const,
+    priority: 0.85,
+  }))
 
-  return [...staticEntries, ...postEntries]
+  const distritoEntries: MetadataRoute.Sitemap = (distritos || []).map((d) => ({
+    url: `${siteUrl}/terrenos/zona/${d.slug}`,
+    lastModified: new Date(d._updatedAt || now),
+    changeFrequency: 'weekly' as const,
+    priority: 0.75,
+  }))
+
+  const postEntries: MetadataRoute.Sitemap = (posts || []).map((post) => ({
+    url: `${siteUrl}/blog/${post.slug}`,
+    lastModified: new Date(post._updatedAt || post.publishedAt || now),
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
+  }))
+
+  return [...staticEntries, ...terrenoEntries, ...distritoEntries, ...postEntries]
 }
