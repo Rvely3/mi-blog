@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Temp tsconfig usado por el sandbox para checkeo de tipos aislado
+tsconfig.check.json

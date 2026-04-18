@@ -105,4 +105,44 @@ export const structure: StructureResolver = (S) =>
             .title('Artículos')
             .defaultOrdering([{ field: 'publishedAt', direction: 'desc' }]),
         ),
+
+      S.divider(),
+
+      // ── Leads (formulario de contacto) ──
+      S.listItem()
+        .title('Leads')
+        .icon(() => '📨')
+        .child(
+          S.list()
+            .title('Leads')
+            .items([
+              S.listItem()
+                .title('Nuevos')
+                .child(
+                  S.documentList()
+                    .title('Leads nuevos')
+                    .schemaType('lead')
+                    .filter('_type == "lead" && status == "nuevo"')
+                    .defaultOrdering([{ field: 'createdAt', direction: 'desc' }]),
+                ),
+              S.listItem()
+                .title('En proceso')
+                .child(
+                  S.documentList()
+                    .title('Leads en proceso')
+                    .schemaType('lead')
+                    .filter(
+                      '_type == "lead" && (status == "contactado" || status == "en_proceso")',
+                    )
+                    .defaultOrdering([{ field: 'createdAt', direction: 'desc' }]),
+                ),
+              S.listItem()
+                .title('Todos')
+                .child(
+                  S.documentTypeList('lead')
+                    .title('Todos los leads')
+                    .defaultOrdering([{ field: 'createdAt', direction: 'desc' }]),
+                ),
+            ]),
+        ),
     ])
