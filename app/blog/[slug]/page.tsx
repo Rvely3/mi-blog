@@ -1,14 +1,14 @@
 import { client } from '@/sanity/lib/client'
-import { PortableText } from '@portabletext/react'
+import { PortableText, type PortableTextBlock } from '@portabletext/react'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import { Metadata } from 'next'
-import imageUrlBuilder from '@sanity/image-url'
+import imageUrlBuilder, { type SanityImageSource } from '@sanity/image-url'
 import Link from 'next/link'
 
 const builder = imageUrlBuilder(client)
 
-function urlFor(source: any) {
+function urlFor(source: SanityImageSource) {
   return builder.image(source)
 }
 
@@ -16,14 +16,14 @@ interface Post {
   _id: string
   title: string
   excerpt: string
-  content: any[]
+  content: PortableTextBlock[]
   publishedAt: string
   author: string
-  coverImage?: any
+  coverImage?: SanityImageSource
   slug: { current: string }
 }
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mi-blog-three-lilac.vercel.app'
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://terrenosentrujillo.pe'
 
 async function getPost(slug: string): Promise<Post | null> {
   return client.fetch(

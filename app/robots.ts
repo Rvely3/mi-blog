@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next'
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://mi-blog-three-lilac.vercel.app'
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL || 'https://terrenosentrujillo.pe'
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -8,9 +9,10 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: '/studio',
+        disallow: ['/studio', '/api/'],
       },
     ],
     sitemap: `${siteUrl}/sitemap.xml`,
+    host: siteUrl,
   }
 }
